@@ -1,5 +1,8 @@
 import numpy as np
 import matplotlib.pyplot as plt
+import scipy.stats as stats
+from scipy.stats import norm
+import matplotlib.mlab as mlab
 from numba import jit #optimization compiler
 import random
 import time
@@ -8,7 +11,7 @@ from rich.progress import track #estimating time it takes to run the code
 # parameters 
 
 H = 0; # Magnetic field
-L = 20; # Lattice size (L * L)
+L = 10; # Lattice size (L * L)
 s = np.random.choice([1,-1],size=(L,L)) # initialize random spin
 n = 100 * L**2 # no. of MC sweeps
 #n = 100000
@@ -97,47 +100,89 @@ def quantities(s,T,n):
     return En_avg, Mag, Cv
 
 
-Mag = np.zeros(len(Temperature))
-En_avg = np.zeros(len(Temperature))
-Cv = np.zeros(len(Temperature))
+def generate_tc_cv():
+    H = 0; # Magnetic field
+    L = 20; # Lattice size (L * L)
+    s = np.random.choice([1,-1],size=(L,L)) # initialize random spin
+    n = 100 * L**2 # no. of MC sweeps
+    #n = 100000
+    Temperature = np.arange(1.0,3.00,0.01) # temperature range that includes critical temperature
 
-start = time.time()
+    Mag = np.zeros(len(Temperature))
+    En_avg = np.zeros(len(Temperature))
+    Cv = np.zeros(len(Temperature))
 
-for ind, T in enumerate(track(Temperature)):
+    start = time.time()
+
+    for ind, T in enumerate(track(Temperature)):
     # Sweeps spins
-    s = mc(s,T,n)
-    En_avg[ind], Mag[ind], Cv[ind] = quantities(s,T,n)
-end = time.time()
-time = (end - start)/60
+        s = mc(s,T,n)
+        En_avg[ind], Mag[ind], Cv[ind] = quantities(s,T,n)
+    end = time.time()
+    t_time = (end - start)/60
+
+    return Cv,Temperature, En_avg, Mag
 
 
+#generate_tc_cv()
+
+def plottccvmag(Temperature, En_avg, Mag, Cv):
 
 
-#plots
-plt.plot(Temperature, En_avg, marker='.', linestyle = "None")
-plt.xlabel("Temperature (T)", fontsize=14);
-plt.ylabel("Energy ", fontsize=14);         #plt.axis('tight');
-plt.show()
+    plt.plot(Temperature, En_avg, marker='.', linestyle = "None")
+    plt.xlabel("Temperature (T)", fontsize=14);
+    plt.ylabel("Energy ", fontsize=14);         #plt.axis('tight');
+    plt.show()
 
 
-plt.plot(Temperature, abs(Mag), marker='.', linestyle = "None")
-plt.xlabel("Temperature (T)", fontsize=14); 
-plt.ylabel("Magnetization ", fontsize=14);   #plt.axis('tight');
-plt.show()
+    plt.plot(Temperature, abs(Mag), marker='.', linestyle = "None")
+    plt.xlabel("Temperature (T)", fontsize=14); 
+    plt.ylabel("Magnetization ", fontsize=14);   #plt.axis('tight');
+    plt.show()
 
 
-plt.plot(Temperature, Cv, marker='.' , linestyle = "None")
-plt.xlabel("Temperature (T)", fontsize=14);  
-plt.ylabel("Specific Heat ", fontsize=14);   #plt.axis('tight');
-plt.show()
+    plt.plot(Temperature, Cv, marker='.' , linestyle = "None")
+    plt.xlabel("Temperature (T)", fontsize=14);  
+    plt.ylabel("Specific Heat ", fontsize=14);   #plt.axis('tight');
+    plt.show()
 
 #################################
 
-print(Cv)
+T_c = []
+for i in range (0,4):
+    Cv,Temperature, En_avg, Mag = generate_tc_cv()
+    if i == 0:
+            plottccvmag(Temperature, En_avg, Mag, Cv)
+    for k in range(0,len(Cv)):
+            if (np.isclose(Cv[k],max(Cv),atol=0.001)):
+                T_c.append(Temperature[k])
 
-k=0
 
-for k in range(len(Cv)):
-    if (np.isclose(Cv[k],max(Cv),atol=0.001)):
-        print(Cv[k],max(Cv),T[k],k)
+
+
+n, bins, patches = plt.hist(T_c,30, normed = True)
+t, p = stats.ttest_1samp(T_c, 2.268)
+#normfit
+(mu, sigma) = norm.fit(T_c)
+#y = mlab.normpdf(bins, mu, sigma)
+x = np.linspace(1.0, 3.0, 100)
+y= stats.norm.pdf(x,mu,sigma)
+l = plt.plot(x, y, 'r--', linewidth=2)
+#plot
+plt.title(r'$\mathrm{Histogram\ of\ T_c:}\ \mu=%.3f,\ \sigma=%.3f,\ p=%.3f$' %(mu, sigma, p))
+plt.xlabel('Critical Temperature)')
+plt.ylabel('relative probability')
+plt.grid(True)
+plt.show()
+
+
+
+print(t)
+print(p)
+
+
+
+
+
+
     
