@@ -149,7 +149,7 @@ def plottccvmag(Temperature, En_avg, Mag, Cv):
 #################################
 
 T_c = []
-for i in range (0,4):
+for i in range (0,19):
     Cv,Temperature, En_avg, Mag = generate_tc_cv()
     if i == 0:
             plottccvmag(Temperature, En_avg, Mag, Cv)
