@@ -8,11 +8,11 @@ from rich.progress import track #estimating time it takes to run the code
 # parameters 
 
 H = 0; # Magnetic field
-L = 50; # Lattice size (L * L)
+L = 20; # Lattice size (L * L)
 s = np.random.choice([1,-1],size=(L,L)) # initialize random spin
 n = 100 * L**2 # no. of MC sweeps
 #n = 100000
-Temperature = np.arange(2.0,3.00,0.02) # temperature range that includes critical temperature
+Temperature = np.arange(1.0,3.00,0.01) # temperature range that includes critical temperature
   
 
 #Energy calculations 
@@ -131,3 +131,13 @@ plt.xlabel("Temperature (T)", fontsize=14);
 plt.ylabel("Specific Heat ", fontsize=14);   #plt.axis('tight');
 plt.show()
 
+#################################
+
+print(Cv)
+
+k=0
+
+for k in range(len(Cv)):
+    if (np.isclose(Cv[k],max(Cv),atol=0.001)):
+        print(Cv[k],max(Cv),T[k],k)
+    
